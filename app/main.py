@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from app.hotels.routes import router as hotels_router
+from app.rooms.routes import router as rooms_router
 
 # Carga las variables del archivo .env.
 load_dotenv()
@@ -22,14 +23,15 @@ APP_TITLE = os.getenv("APP_TITLE", "API Reservas Hotel")
 # documentacion interactiva (Swagger UI) en la ruta /docs.
 app = FastAPI(
     title=APP_TITLE,
-    description="API REST para administrar hoteles.",
+    description="API REST para administrar hoteles y habitaciones.",
     version="1.0.0",
 )
 
-# Se registran las rutas del modulo de hoteles.
+# Se registran las rutas de cada modulo.
 # El prefijo /api/v1 es la version de la API, asi que las rutas
-# quedan como /api/v1/hotels.
+# quedan como /api/v1/hotels y /api/v1/rooms.
 app.include_router(hotels_router, prefix="/api/v1")
+app.include_router(rooms_router, prefix="/api/v1")
 
 
 @app.get("/", tags=["Inicio"])
