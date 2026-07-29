@@ -1,0 +1,8 @@
+# Librerias del proyecto
+fastapi>=0.110.0          # framework para construir la API
+uvicorn>=0.28.0           # servidor que ejecuta la aplicacion
+sqlalchemy>=2.0.0         # ORM para trabajar con la base de datos
+psycopg2-binary>=2.9.0    # driver para conectarse a PostgreSQL
+alembic>=1.13.0           # migraciones de la base de datos
+python-dotenv>=1.0.0      # lectura del archivo .env
+pydantic>=2.6.0           # validacion de datos con esquemas

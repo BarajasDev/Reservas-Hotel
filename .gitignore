@@ -1,0 +1,14 @@
+# Archivos generados por Python
+__pycache__/
+*.py[cod]
+
+# Variables de entorno con contrasenas (se sube solo .env.example)
+.env
+
+# Entornos virtuales
+venv/
+.venv/
+
+# Carpetas de editores
+.vscode/
+.idea/

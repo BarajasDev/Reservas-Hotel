@@ -1,0 +1,49 @@
+# Docker Compose levanta los dos servicios del proyecto con un solo comando:
+#   docker compose up --build
+#
+# Los valores ${VARIABLE:-valor} se leen del archivo .env. El texto despues
+# de ":-" es el valor por defecto, para que el proyecto arranque aunque
+# alguien olvide crear su .env.
+
+services:
+  # 1) Base de datos PostgreSQL
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hotel_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hotel_password}
+      POSTGRES_DB: ${POSTGRES_DB:-reservas_hotel}
+    # El puerto de PostgreSQL NO se publica hacia la computadora porque la API
+    # se conecta por la red interna de Docker (host "db"). Asi el proyecto
+    # arranca aunque ya exista otro PostgreSQL usando el puerto 5432.
+    # Si se quiere revisar la base con pgAdmin o DBeaver, quitar el # de abajo:
+    # ports:
+    #   - "5432:5432"
+    volumes:
+      # Volumen para que los datos no se borren al apagar el contenedor.
+      - postgres_data:/var/lib/postgresql/data
+    # El healthcheck le avisa a Docker cuando PostgreSQL ya esta listo.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hotel_user} -d ${POSTGRES_DB:-reservas_hotel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2) API de FastAPI
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://hotel_user:hotel_password@db:5432/reservas_hotel}
+      APP_TITLE: ${APP_TITLE:-API Reservas Hotel}
+    depends_on:
+      # No arranca la API hasta que la base de datos responda.
+      db:
+        condition: service_healthy
+    # Primero aplica las migraciones de Alembic y luego levanta el servidor.
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+volumes:
+  postgres_data:
