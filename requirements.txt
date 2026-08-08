@@ -6,3 +6,7 @@ psycopg2-binary>=2.9.0    # driver para conectarse a PostgreSQL
 alembic>=1.13.0           # migraciones de la base de datos
 python-dotenv>=1.0.0      # lectura del archivo .env
 pydantic>=2.6.0           # validacion de datos con esquemas
+email-validator>=2.1.0    # valida el formato de correos (EmailStr)
+python-jose[cryptography]>=3.3.0  # generar y validar tokens JWT
+passlib[bcrypt]>=1.7.4    # hash de contrasenas
+python-multipart>=0.0.9   # requerido por el formulario de login (OAuth2PasswordRequestForm)

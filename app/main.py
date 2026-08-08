@@ -10,6 +10,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
+from app.auth.routes import router as auth_router
 from app.bookings.routes import router as bookings_router
 from app.hotels.routes import router as hotels_router
 from app.rooms.routes import router as rooms_router
@@ -31,6 +32,7 @@ app = FastAPI(
 # Se registran las rutas de cada modulo.
 # El prefijo /api/v1 es la version de la API, asi que las rutas
 # quedan como /api/v1/hotels, /api/v1/rooms y /api/v1/bookings.
+app.include_router(auth_router, prefix="/api/v1")
 app.include_router(hotels_router, prefix="/api/v1")
 app.include_router(rooms_router, prefix="/api/v1")
 app.include_router(bookings_router, prefix="/api/v1")

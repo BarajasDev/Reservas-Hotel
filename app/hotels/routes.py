@@ -8,6 +8,7 @@ Create (POST), Read (GET), Update (PUT) y Delete (DELETE).
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import obtener_usuario_actual
 from app.database import get_db
 
 from .models import Hotel
@@ -16,7 +17,12 @@ from .schemas import HotelCreate, HotelResponse, HotelUpdate
 # APIRouter agrupa las rutas de este modulo.
 # prefix: todas las rutas empiezan con /hotels
 # tags:   agrupa los endpoints con ese titulo dentro de /docs
-router = APIRouter(prefix="/hotels", tags=["Hoteles"])
+# dependencies: exige un token JWT valido para usar cualquier ruta del modulo
+router = APIRouter(
+    prefix="/hotels",
+    tags=["Hoteles"],
+    dependencies=[Depends(obtener_usuario_actual)],
+)
 
 
 @router.post("/", response_model=HotelResponse, status_code=201)

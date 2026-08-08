@@ -38,6 +38,9 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://hotel_user:hotel_password@db:5432/reservas_hotel}
       APP_TITLE: ${APP_TITLE:-API Reservas Hotel}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-cambia-esta-clave-en-produccion}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
     depends_on:
       # No arranca la API hasta que la base de datos responda.
       db:

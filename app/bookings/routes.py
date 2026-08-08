@@ -3,13 +3,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import obtener_usuario_actual
 from app.database import get_db
 from app.rooms.models import Room
 
 from .models import Booking
 from .schemas import BookingCreate, BookingResponse, BookingUpdate
 
-router = APIRouter(prefix="/bookings", tags=["Reservas"])
+router = APIRouter(
+    prefix="/bookings",
+    tags=["Reservas"],
+    dependencies=[Depends(obtener_usuario_actual)],
+)
 
 # Estados que acepta la API para una reserva.
 ESTADOS_VALIDOS = ["confirmada", "cancelada"]

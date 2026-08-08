@@ -3,13 +3,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import obtener_usuario_actual
 from app.database import get_db
 from app.hotels.models import Hotel
 
 from .models import Room
 from .schemas import RoomCreate, RoomResponse, RoomUpdate
 
-router = APIRouter(prefix="/rooms", tags=["Habitaciones"])
+router = APIRouter(
+    prefix="/rooms",
+    tags=["Habitaciones"],
+    dependencies=[Depends(obtener_usuario_actual)],
+)
 
 
 def validar_datos_habitacion(db: Session, datos, room_id: int | None = None):

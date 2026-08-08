@@ -20,6 +20,8 @@ Alumno: Jahaziel Barajas Avila — Grupo 07IDESVA.
 | Alembic | Migraciones (crear y versionar las tablas) |
 | Pydantic | Validar los datos de entrada y dar forma a las respuestas |
 | python-dotenv | Leer la configuracion desde el archivo `.env` |
+| python-jose | Generar y validar los tokens JWT del login |
+| Passlib | Guardar las contrasenas con hash, nunca en texto plano |
 | Docker / Docker Compose | Levantar la API y la base de datos con un solo comando |
 
 ---
@@ -100,6 +102,9 @@ Se configuran en el archivo `.env` (ver la plantilla `.env.example`):
 | `POSTGRES_DB` | Nombre de la base de datos |
 | `DATABASE_URL` | Cadena de conexion que usa SQLAlchemy |
 | `APP_TITLE` | Titulo que aparece en la documentacion |
+| `JWT_SECRET_KEY` | Clave con la que se firman los tokens JWT |
+| `JWT_ALGORITHM` | Algoritmo de firma del token (HS256) |
+| `JWT_ACCESS_TOKEN_EXPIRE_MINUTES` | Minutos de vigencia del token antes de expirar |
 
 El archivo `.env` **no se sube a GitHub** porque contiene contrasenas; por eso se
 incluye `.env.example` como plantilla.
@@ -116,6 +121,16 @@ Reservas-Hotel/
 ├── app/
 │   ├── main.py              # Crea la aplicacion y registra las rutas
 │   ├── database.py          # Conexion a PostgreSQL con SQLAlchemy
+│   │
+│   ├── auth/                # Autenticacion JWT
+│   │   ├── security.py      # Hash de contrasena y creacion/validacion del token
+│   │   ├── dependencies.py  # Dependencia que protege los endpoints con JWT
+│   │   ├── schemas.py       # Esquema de la respuesta del login
+│   │   └── routes.py        # Endpoints de registro y login
+│   │
+│   ├── users/                # Modulo de usuarios
+│   │   ├── models.py        # Tabla users
+│   │   └── schemas.py       # Esquemas Pydantic
 │   │
 │   ├── hotels/              # Modulo de hoteles
 │   │   ├── models.py        # Tabla hotels
@@ -137,7 +152,8 @@ Reservas-Hotel/
 │   └── versions/            # Migraciones en orden
 │       ├── 0001_crear_tabla_hotels.py
 │       ├── 0002_crear_tabla_rooms.py
-│       └── 0003_crear_tabla_bookings.py
+│       ├── 0003_crear_tabla_bookings.py
+│       └── 0004_crear_tabla_users.py
 │
 ├── alembic.ini
 ├── docker-compose.yml       # Servicios: api + db
@@ -164,7 +180,15 @@ hotels (1) ─── (muchas) rooms (1) ─── (muchas) bookings
 
 ## Endpoints de la API
 
-Todas las rutas viven bajo el prefijo `/api/v1`.
+Todas las rutas viven bajo el prefijo `/api/v1`. Las rutas de hoteles,
+habitaciones y reservas requieren un token JWT (ver seccion de autenticacion).
+
+### Autenticacion
+
+| Metodo | Ruta | Descripcion |
+|---|---|---|
+| POST | `/api/v1/auth/register` | Registrar un usuario nuevo |
+| POST | `/api/v1/auth/login` | Iniciar sesion y obtener el token JWT |
 
 ### Hoteles
 
@@ -214,12 +238,49 @@ Todas las rutas viven bajo el prefijo `/api/v1`.
 - Una habitacion no se puede reservar dos veces en fechas que se cruzan.
 - El total se calcula en el servidor: `noches x precio por noche`.
 
+**Autenticacion**
+- No se permiten dos usuarios con el mismo correo.
+- La contrasena se guarda con hash, nunca en texto plano.
+- Los endpoints de hoteles, habitaciones y reservas piden un token JWT valido;
+  sin el header `Authorization: Bearer <token>` responden `401 Unauthorized`.
+
+---
+
+## Autenticacion (JWT)
+
+**1. Registrar un usuario** — `POST /api/v1/auth/register`
+
+```json
+{
+  "email": "admin@hotel.com",
+  "password": "password123"
+}
+```
+
+**2. Iniciar sesion** — `POST /api/v1/auth/login` (formulario, no JSON)
+
+En `/docs` el boton **Authorize** abre el mismo formulario: el correo va en
+el campo `username`. La respuesta trae el `access_token`.
+
+**3. Usar el token en los endpoints protegidos**
+
+En `/docs` se pega el token en el boton **Authorize**. Desde otro cliente
+se envia el header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+Si el token no se envia, ya expiro (dura `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`,
+30 minutos por defecto) o es invalido, la API responde `401 Unauthorized`.
+
 ---
 
 ## Ejemplo de uso
 
-Los datos se pueden capturar desde `/docs`. Este es el orden correcto,
-porque cada entidad depende de la anterior.
+Los datos se pueden capturar desde `/docs`. Primero hay que registrar un
+usuario, iniciar sesion y autorizar el token (ver seccion anterior); despues
+se sigue este orden, porque cada entidad depende de la anterior.
 
 **1. Crear un hotel** — `POST /api/v1/hotels/`
 
